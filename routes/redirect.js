@@ -1,23 +1,19 @@
 const express = require("express");
 const router = express.Router();
+const { getLongUrl, incrementClick } = require("../db/index");
 
-const { getLink, recordClick } = require("../db/index");
-
-// REDIRECT ROUTE (/:code)
-router.get("/:code", (req, res) => {
+router.get("/:code([A-Za-z0-9]{5,8})", (req, res) => {
   const code = req.params.code;
+  const longUrl = getLongUrl(code);
 
-  const linkData = getLink(code);
-
-  if (!linkData) {
+  if (!longUrl) {
     return res.status(404).send("Short URL not found");
   }
 
-  // Record click
-  recordClick(code);
+  // Increment clicks + update lastClicked
+  incrementClick(code);
 
-  // Redirect to original URL
-  return res.redirect(linkData.url);
+  return res.redirect(longUrl);
 });
 
 module.exports = router;
