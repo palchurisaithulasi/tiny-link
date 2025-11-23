@@ -18,9 +18,9 @@ app.use(express.static(path.join(__dirname, "public")));
 const linkRoutes = require("./routes/links");
 app.use("/api/links", linkRoutes);
 
-// STATS ROUTE (MUST COME BEFORE REDIRECT)
+// STATS ROUTE
 const statsRoutes = require("./routes/stats");
-app.use("/", statsRoutes);
+app.use("/stats", statsRoutes);
 
 // REDIRECT ROUTE — MUST BE LAST
 const redirectRoutes = require("./routes/redirect");
