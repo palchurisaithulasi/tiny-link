@@ -6,7 +6,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// HEALTH CHECK — MUST COME BEFORE REDIRECT
+// HEALTH CHECK — ALWAYS FIRST
 app.get("/healthz", (req, res) => {
   res.json({ ok: true, version: "1.0" });
 });
@@ -18,7 +18,11 @@ app.use(express.static(path.join(__dirname, "public")));
 const linkRoutes = require("./routes/links");
 app.use("/api/links", linkRoutes);
 
-// Redirect route — MUST BE LAST
+// STATS ROUTE (SHOW CLICK COUNT + INFO)
+const statsRoutes = require("./routes/stats");
+app.use("/", statsRoutes);
+
+// REDIRECT ROUTE (MUST BE LAST)
 const redirectRoutes = require("./routes/redirect");
 app.use("/", redirectRoutes);
 
