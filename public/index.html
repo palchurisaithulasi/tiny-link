@@ -25,21 +25,21 @@
     <h2>Create Short URL</h2>
     <input id="longUrl" type="text" placeholder="Enter long URL (e.g. https://google.com)" style="width:70%;" />
     <button id="shortenBtn">Shorten</button>
-    <div id="result" class="result" role="status" aria-live="polite"></div>
-    <div id="error" class="error" role="alert" aria-live="polite"></div>
+    <div id="result" class="result"></div>
+    <div id="error" class="error"></div>
   </section>
 
   <section>
     <h2 style="margin-top:24px">All Links</h2>
     <button id="refreshBtn">Refresh List</button>
-    <div class="small" style="margin-top:8px">Click code to open, click Delete to remove.</div>
+    <div class="small" style="margin-top:8px">Click code to open, click stats for info.</div>
 
-    <table aria-describedby="links-table" style="margin-top:8px;">
+    <table style="margin-top:8px;">
       <thead>
         <tr>
-          <th style="width:18%">Code</th>
-          <th style="width:60%">URL</th>
-          <th style="width:22%">Action</th>
+          <th>Code</th>
+          <th>URL</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody id="linksTable"></tbody>
@@ -47,128 +47,29 @@
   </section>
 
   <script>
-    // helper - escape HTML for safety when injecting strings
-    function escapeHtml(str) {
-      if (typeof str !== 'string') return str;
-      return str.replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
-
-    // Create a short link (POST /api/links)
     async function createLink() {
-      const urlInput = document.getElementById("longUrl");
-      const resultEl = document.getElementById("result");
-      const errorEl = document.getElementById("error");
-      resultEl.textContent = "";
-      errorEl.textContent = "";
+      const url = document.getElementById("longUrl").value.trim();
+      const result = document.getElementById("result");
+      const error = document.getElementById("error");
 
-      const url = urlInput.value && urlInput.value.trim();
+      result.textContent = "";
+      error.textContent = "";
+
       if (!url) {
-        errorEl.textContent = "Please enter a URL.";
+        error.textContent = "Please enter a URL.";
         return;
       }
 
-      try {
-        const res = await fetch("/api/links", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url })
-        });
+      const res = await fetch("/api/links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
 
-        const data = await res.json();
-
-        if (!res.ok || !data.success) {
-          errorEl.textContent = data.error || "Failed to create link";
-          return;
-        }
-
-        // show short URL (absolute)
-        resultEl.innerHTML = 'Short URL: <a href="' + escapeHtml(data.shortUrl) + '" target="_blank">' + escapeHtml(data.shortUrl) + '</a>';
-        urlInput.value = "";
-        loadLinks();
-      } catch (err) {
-        console.error(err);
-        errorEl.textContent = "Network error. Try again.";
+      const data = await res.json();
+      if (!data.success) {
+        error.textContent = data.error || "Failed to create short URL.";
+        return;
       }
-    }
 
-    // Load all links (debug route). Accepts both shapes:
-    // - data.links[code] = "https://google.com"
-    // - data.links[code] = { url: "...", clicks: N, lastClicked: ... }
-    async function loadLinks() {
-      const table = document.getElementById("linksTable");
-      table.innerHTML = "<tr><td colspan='3'>Loading...</td></tr>";
-
-      try {
-        const res = await fetch("/api/links/debug/all");
-        if (!res.ok) {
-          table.innerHTML = "<tr><td colspan='3'>Failed to load links</td></tr>";
-          return;
-        }
-        const data = await res.json();
-        const links = (data && data.links) || {};
-
-        // build rows
-        let rows = "";
-        const codes = Object.keys(links);
-        if (codes.length === 0) {
-          table.innerHTML = "<tr><td colspan='3'>No links yet</td></tr>";
-          return;
-        }
-
-        for (const code of codes) {
-          const item = links[code];
-
-          // support both shapes
-          const url = (typeof item === "string") ? item : (item && item.url) ? item.url : "";
-          const displayUrl = escapeHtml(url);
-          const codeEsc = escapeHtml(code);
-
-          // actions:
-          // - open: /code/:code (stats page) and /:code (redirect)
-          // - delete: DELETE /api/links/delete/:code
-          rows += `<tr>
-            <td style="min-width:90px;">
-              <a class="code-link" href="/${codeEsc}" target="_blank" title="Open redirect">${codeEsc}</a>
-              <div class="small"><a href="/code/${codeEsc}">stats</a></div>
-            </td>
-            <td>${displayUrl}</td>
-            <td class="actions">
-              <button onclick="deleteLink('${codeEsc}')">Delete</button>
-            </td>
-          </tr>`;
-        }
-
-        table.innerHTML = rows;
-      } catch (err) {
-        console.error(err);
-        table.innerHTML = "<tr><td colspan='3'>Network or parsing error</td></tr>";
-      }
-    }
-
-    // Delete using current backend path (DELETE /api/links/delete/:code)
-    async function deleteLink(code) {
-      if (!confirm("Delete short link " + code + " ?")) return;
-
-      try {
-        const res = await fetch("/api/links/delete/" + encodeURIComponent(code), {
-          method: "DELETE"
-        });
-        if (!res.ok) {
-          alert("Delete failed");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Network error");
-      }
-      loadLinks();
-    }
-
-    // wire buttons
-    document.getElementById("shortenBtn").addEventListener("click", createLink);
-    document.getElementById("refreshBtn").addEventListener("click", loadLinks);
-
-    // initial load
-    loadLinks();
-  </script>
-</body>
-</html>
+      result.innerHTML = `Short URL: <a href="${data.shortUrl}" target="_blank">${data.shortUrl
