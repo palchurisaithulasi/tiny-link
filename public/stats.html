@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Link Stats</title>
+</head>
+<body>
+
+    <h2>Stats for Short URL</h2>
+
+    <p><b>Code:</b> <span id="code"></span></p>
+    <p><b>Original URL:</b> <span id="url"></span></p>
+    <p><b>Total Clicks:</b> <span id="clicks"></span></p>
+    <p><b>Last Clicked:</b> <span id="lastClicked"></span></p>
+
+    <script>
+        // Extract code from URL path: /code/ABC123
+        const pathParts = window.location.pathname.split("/");
+        const code = pathParts[pathParts.length - 1];
+
+        document.getElementById("code").innerText = code;
+
+        async function loadStats() {
+            const res = await fetch(`/api/links/stats/${code}`);
+            const data = await res.json();
+
+            if (!data.success) {
+                document.getElementById("url").innerText = "Not found";
+                document.getElementById("clicks").innerText = "-";
+                document.getElementById("lastClicked").innerText = "-";
+                return;
+            }
+
+            document.getElementById("url").innerText = data.url;
+            document.getElementById("clicks").innerText = data.clicks;
+            document.getElementById("lastClicked").innerText = data.lastClicked ? data.lastClicked : "Never clicked";
+        }
+
+        loadStats();
+    </script>
+
+</body>
+</html>

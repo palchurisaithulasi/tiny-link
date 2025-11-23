@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TinyLink Dashboard</title>
+</head>
+<body>
+    <h2>Create Short URL</h2>
+
+    <input type="text" id="longUrl" placeholder="Enter long URL" style="width:300px;">
+    <button onclick="createLink()">Shorten</button>
+
+    <p id="result"></p>
+
+    <h2>All Links</h2>
+    <button onclick="loadLinks()">Refresh List</button>
+
+    <table border="1" cellpadding="8" style="margin-top:10px;">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>URL</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="linksTable"></tbody>
+    </table>
+
+    <script>
+        async function createLink() {
+            const url = document.getElementById("longUrl").value;
+
+            const res = await fetch("/api/links", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({url})
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById("result").innerText = "Short URL: " + data.shortUrl;
+                loadLinks();
+            } else {
+                document.getElementById("result").innerText = "Error: " + data.error;
+            }
+        }
+
+        async function loadLinks() {
+            const res = await fetch("/api/links/debug/all");
+            const data = await res.json();
+
+            const table = document.getElementById("linksTable");
+            table.innerHTML = "";
+
+            for (let code in data.links) {
+                const longUrl = data.links[code];
+
+                const row = `<tr>
+                    <td><a href="/${code}" target="_blank">${code}</a></td>
+                    <td>${longUrl}</td>
+                    <td><button onclick="deleteLink('${code}')">Delete</button></td>
+                </tr>`;
+
+                table.innerHTML += row;
+            }
+        }
+
+        async function deleteLink(code) {
+            await fetch("/api/links/" + code, {
+                method: "DELETE"
+            });
+
+            loadLinks();
+        }
+
+        loadLinks();
+    </script>
+
+</body>
+</html>
