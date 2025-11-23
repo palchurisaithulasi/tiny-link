@@ -1,21 +1,17 @@
 const express = require("express");
 const router = express.Router();
+const { getLongUrl, incrementClick } = require("../db/index");
 
-const { getLongUrl, updateStats } = require("../db/index");
-
-// CORRECT REDIRECT ROUTE WITH PROPER REGEX
-router.get("/:code([A-Za-z0-9]{5,8})", (req, res) => {
-  const code = req.params.code;
+// SAFEST ROUTE — no regex in the path
+router.get("/:code", (req, res) => {
+  const { code } = req.params;
 
   const longUrl = getLongUrl(code);
-
   if (!longUrl) {
-    return res.status(404).send("Short URL not found");
+    return res.status(404).send("Short URL Not Found");
   }
 
-  // Update stats
-  updateStats(code);
-
+  incrementClick(code);
   return res.redirect(longUrl);
 });
 
