@@ -18,11 +18,11 @@ app.use(express.static(path.join(__dirname, "public")));
 const linkRoutes = require("./routes/links");
 app.use("/api/links", linkRoutes);
 
-// STATS ROUTE (SHOW CLICK COUNT + INFO)
-const statsRoutes = require("./routes/stats");
-app.use("/", statsRoutes);
+// ❌ REMOVE statsRoutes — that file does not exist
+// ❌ const statsRoutes = require("./routes/stats");
+// ❌ app.use("/", statsRoutes);
 
-// REDIRECT ROUTE (MUST BE LAST)
+// REDIRECT ROUTE — MUST BE LAST
 const redirectRoutes = require("./routes/redirect");
 app.use("/", redirectRoutes);
 
