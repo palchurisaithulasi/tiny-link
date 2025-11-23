@@ -18,9 +18,9 @@ app.use(express.static(path.join(__dirname, "public")));
 const linkRoutes = require("./routes/links");
 app.use("/api/links", linkRoutes);
 
-// ❌ REMOVE statsRoutes — that file does not exist
-// ❌ const statsRoutes = require("./routes/stats");
-// ❌ app.use("/", statsRoutes);
+// STATS ROUTE (MUST COME BEFORE REDIRECT)
+const statsRoutes = require("./routes/stats");
+app.use("/", statsRoutes);
 
 // REDIRECT ROUTE — MUST BE LAST
 const redirectRoutes = require("./routes/redirect");
