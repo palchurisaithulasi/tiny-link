@@ -1,18 +1,20 @@
 const express = require("express");
 const router = express.Router();
-const { getLongUrl, incrementClick } = require("../db/index");
 
-// SAFEST ROUTE — no regex in the path
+const { getLink, recordClick } = require("../db/index");
+
+// SAFE CATCH-ALL REDIRECT
 router.get("/:code", (req, res) => {
-  const { code } = req.params;
+  const code = req.params.code;
 
-  const longUrl = getLongUrl(code);
-  if (!longUrl) {
+  const link = getLink(code);
+
+  if (!link) {
     return res.status(404).send("Short URL Not Found");
   }
 
-  incrementClick(code);
-  return res.redirect(longUrl);
+  recordClick(code);          // update click count
+  return res.redirect(link.url);   // redirect to original URL
 });
 
 module.exports = router;

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { createShortLink, links } = require("../db/index");
+const { createShortLink, links, getLink } = require("../db/index");
 
 // CREATE SHORT LINK
 router.post("/", (req, res) => {
@@ -16,7 +16,7 @@ router.post("/", (req, res) => {
   res.json({
     success: true,
     code: code,
-    shortUrl: `http://localhost:3000/${code}`,
+    shortUrl: `${process.env.RENDER_EXTERNAL_URL || "http://localhost:3000"}/${code}`,
   });
 });
 
@@ -25,25 +25,26 @@ router.get("/debug/all", (req, res) => {
   res.json({ links });
 });
 
-// GET STATS FOR A CODE
+// GET STATS FOR A SHORT CODE
 router.get("/stats/:code", (req, res) => {
   const code = req.params.code;
+  const link = getLink(code);
 
-  if (!links[code]) {
+  if (!link) {
     return res.status(404).json({ error: "Code not found" });
   }
 
   res.json({
     success: true,
     code: code,
-    url: links[code].url,
-    clicks: links[code].clicks,
-    lastClicked: links[code].lastClicked
+    url: link.url,
+    clicks: link.clicks,
+    lastClicked: link.lastClicked
   });
 });
 
 // DELETE A SHORT LINK
-router.delete("/delete/:code", (req, res) => {
+router.delete("/:code", (req, res) => {
   const code = req.params.code;
 
   if (!links[code]) {
