@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { getLink } = require("../db/index");
 
-// Stats page
+// Stats page – correct route: /code/:code
 router.get("/code/:code", (req, res) => {
   const code = req.params.code;
   const link = getLink(code);

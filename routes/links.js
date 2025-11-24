@@ -1,62 +1,50 @@
 const express = require("express");
 const router = express.Router();
 
-const { createShortLink, links, getLink } = require("../db/index");
+const { createShortLink, listLinks } = require("../db/index");
 
-// CREATE SHORT LINK
+// Create short link
 router.post("/", (req, res) => {
-  const { url } = req.body;
+  const { url, code } = req.body;
 
   if (!url) {
-    return res.status(400).json({ error: "URL is required" });
+    return res.status(400).json({ success: false, error: "URL is required" });
   }
 
-  const code = createShortLink(url);
+  const result = createShortLink(url, code);
 
-  res.json({
+  if (result.error === "CodeExists") {
+    return res.status(409).json({ success: false, error: "Custom code already exists" });
+  }
+
+  if (result.error) {
+    return res.status(400).json({ success: false, error: result.error });
+  }
+
+  return res.json({
     success: true,
-    code: code,
-    shortUrl: `${process.env.RENDER_EXTERNAL_URL || "http://localhost:3000"}/${code}`,
+    shortUrl: result.shortUrl,
+    code: result.code
   });
 });
 
-// DEBUG: SHOW ALL LINKS
-router.get("/debug/all", (req, res) => {
-  res.json({ links });
+// List all links
+router.get("/", (req, res) => {
+  const all = listLinks();
+  res.json({ success: true, links: all });
 });
 
-// GET STATS FOR A SHORT CODE
-router.get("/stats/:code", (req, res) => {
-  const code = req.params.code;
-  const link = getLink(code);
-
-  if (!link) {
-    return res.status(404).json({ error: "Code not found" });
-  }
-
-  res.json({
-    success: true,
-    code: code,
-    url: link.url,
-    clicks: link.clicks,
-    lastClicked: link.lastClicked
-  });
-});
-
-// DELETE A SHORT LINK
+// Delete a link
 router.delete("/:code", (req, res) => {
   const code = req.params.code;
 
+  const { links } = require("../db/index");
   if (!links[code]) {
-    return res.status(404).json({ error: "Code not found" });
+    return res.status(404).json({ success: false, error: "Code not found" });
   }
 
   delete links[code];
-
-  res.json({
-    success: true,
-    message: "Short link deleted"
-  });
+  res.json({ success: true, message: "Short link deleted" });
 });
 
 module.exports = router;
